@@ -16,10 +16,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect::<Vec<_>>();
 
     let number_fully_contained = ranges.iter()
-        .filter(|((min_a, max_a), (min_b, max_b))| min_a >= min_b && max_a <= max_b || min_b >= min_a && max_b <= max_a)
+        .filter(|(a, b)| contains(*a, *b) || contains(*b, *a))
+        .count();
+        
+    let number_overlaps = ranges.iter()
+        .filter(|(a, b)| overlaps(*a, *b))
         .count();
 
     println!("Fully contains: {number_fully_contained}");
+    println!("Overlaps: {number_overlaps}");
 
     Ok(())
+}
+
+fn contains(a: (i32, i32), b: (i32, i32)) -> bool {
+    a.0 <= b.0 && a.1 >= b.1
+}
+
+fn overlaps(a: (i32, i32), b: (i32, i32)) -> bool {
+    a.0 <= b.1 && b.0 <= a.1
 }
