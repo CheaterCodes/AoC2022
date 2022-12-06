@@ -4,8 +4,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let file = File::open("day6/input.txt")?;
     let reader = BufReader::new(file);
     let lines = reader.lines().map(Result::unwrap).collect::<Vec<_>>();
-    let mut input = lines[0].chars();
 
+    let mut input = lines[0].chars();
     let mut start_marker = VecDeque::new();
     start_marker.extend((&mut input).take(3));
 
@@ -22,6 +22,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     println!("Packet starts at {taken}");
+
+    let mut input = lines[0].chars();
+    let mut start_marker = VecDeque::new();
+    start_marker.extend((&mut input).take(13));
+
+    let mut taken = 13;
+    for char in &mut input {
+        taken += 1;
+
+        start_marker.push_back(char);
+        if is_marker(start_marker.iter().copied()) {
+            break;
+        }
+
+        start_marker.pop_front();
+    }
+
+    println!("Message starts at {taken}");
 
     Ok(())
 }
