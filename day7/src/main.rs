@@ -1,24 +1,14 @@
 use std::{error::Error, io::{BufReader, BufRead}};
 
-struct Directory {
-    name: String,
-    size: usize,
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let file = std::fs::File::open("day7/input.txt")?;
     let reader = BufReader::new(file);
     let lines = reader.lines().map(Result::unwrap).collect::<Vec<_>>();
 
     let mut dir_stack = Vec::new();
-    dir_stack.push(Directory {
-        name: "".to_owned(),
-        size: 0
-    });
+    dir_stack.push(0);
 
     let mut completed_dirs = Vec::new();
-
-    let mut total_size = 0;
 
     let mut commands = lines.iter().peekable();
     while let Some(command) = commands.next() {
@@ -32,7 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             let dir = dir_stack.pop().unwrap();
                             let parent = dir_stack.last_mut().unwrap();
 
-                            parent.size += dir.size;
+                            *parent += dir;
                             completed_dirs.push(dir);
                         }
                     },
@@ -40,10 +30,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                         let dir = dir_stack.pop().unwrap();
                         let parent = dir_stack.last_mut().unwrap();
 
-                        parent.size += dir.size;
+                        *parent += dir;
                         completed_dirs.push(dir);
                     },
-                    dir => dir_stack.push(Directory { name: dir.to_owned(), size: 0 }),
+                    _ => dir_stack.push(0),
                 }
             },
             Some("ls") => {
@@ -54,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         Some("dir") => (),
                         Some(size) => {
                             let dir = dir_stack.last_mut().unwrap();
-                            dir.size += size.parse::<usize>().unwrap()
+                            *dir += size.parse::<usize>().unwrap()
                         },
                         _ => panic!()
                     };
@@ -69,19 +59,19 @@ fn main() -> Result<(), Box<dyn Error>> {
         let dir = dir_stack.pop().unwrap();
         let parent = dir_stack.last_mut().unwrap();
 
-        parent.size += dir.size;
+        *parent += dir;
         completed_dirs.push(dir);
     }
 
-    let part1: usize = completed_dirs.iter().filter(|dir| dir.size <= 100000).map(|dir| dir.size).sum();
+    let part1: usize = completed_dirs.iter().filter(|dir| **dir <= 100000).sum();
     println!("Part 1: {part1}");
 
     let total_size = 70000000;
-    let used_size = dir_stack[0].size;
+    let used_size = dir_stack[0];
     let free_size = total_size - used_size;
     let required_size = 30000000 - free_size;
 
-    let part2 = completed_dirs.iter().filter(|dir| dir.size >= required_size).map(|dir| dir.size).min().unwrap();
+    let part2 = completed_dirs.iter().filter(|dir| **dir >= required_size).min().unwrap();
     println!("Part 2: {part2}");
 
     Ok(())
