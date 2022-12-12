@@ -29,13 +29,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let mut distance = vec![vec![usize::MAX; char_map[0].len()]; char_map.len()];
-    distance[start.0][start.1] = 0;
+    distance[goal.0][goal.1] = 0;
 
     let mut to_check = VecDeque::new();
-    to_check.push_back(start);
+    to_check.push_back(goal);
     while let Some(current) = to_check.pop_front() {
         let current_distance = distance[current.0][current.1];
-        for next in get_next(&height_map, current) {
+        for next in get_previous(&height_map, current) {
             let next_distance = &mut distance[next.0][next.1];
             if *next_distance > current_distance + 1 {
                 *next_distance = current_distance + 1;
@@ -44,35 +44,29 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let goal_distance = distance[goal.0][goal.1];
-    println!("Part 1: {goal_distance}");
+    let start_distance = distance[start.0][start.1];
+    println!("Part 1: {start_distance}");
+
+    let min_distance = height_map.iter().flatten().zip(distance.iter().flatten())
+        .filter_map(|(&height, &distance)| (height == 0).then_some(distance))
+        .min().unwrap();
+    println!("Part 2: {min_distance}");
 
     Ok(())
 }
 
-fn get_next(height_map: &Vec<Vec<u8>>, (row, col): (usize, usize)) -> impl Iterator<Item = (usize, usize)> + '_ {
+fn get_previous(height_map: &Vec<Vec<u8>>, (row, col): (usize, usize)) -> impl Iterator<Item = (usize, usize)> + '_ {
     let max_row = height_map.len() - 1;
     let max_col = height_map[0].len() - 1;
     let center_height = height_map[row][col];
 
-    Direction::ALL.iter().filter_map(move |dir| {
+    (0..4).into_iter().filter_map(move |dir| {
         match dir {
-            Direction::Up => if row == 0 { None } else { Some((row - 1,  col)) },
-            Direction::Down => if row == max_row { None } else { Some((row + 1,  col)) },
-            Direction::Left => if col == 0 { None } else { Some((row,  col - 1)) },
-            Direction::Right => if col == max_col { None } else { Some((row,  col + 1)) },
+            0 => if row == 0 { None } else { Some((row - 1,  col)) },
+            1 => if row == max_row { None } else { Some((row + 1,  col)) },
+            2 => if col == 0 { None } else { Some((row,  col - 1)) },
+            3 => if col == max_col { None } else { Some((row,  col + 1)) },
+            _ => unreachable!()
         }
-    }).filter(move |(row, col)| height_map[*row][*col] <= center_height + 1)
-}
-
-#[derive(Clone, Copy, Debug)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Direction {
-    const ALL: [Direction; 4] = [Direction::Up, Direction::Down, Direction::Left, Direction::Right];
+    }).filter(move |(row, col)| height_map[*row][*col] + 1 >= center_height)
 }
