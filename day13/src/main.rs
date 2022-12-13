@@ -1,6 +1,6 @@
 use std::{error::Error, fs::File, io::{BufReader, BufRead}, cmp::Ordering};
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 enum PacketData {
     Integer(i64),
     List(Vec<PacketData>),
@@ -79,20 +79,34 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut pairs = Vec::new();
     for chunk in lines.chunks(3) {
-        pairs.push((
+        pairs.push([
             PacketData::parse(&mut StringParser::new(&chunk[0])),
             PacketData::parse(&mut StringParser::new(&chunk[1])),
-        ));
+        ]);
     }
 
     let mut total = 0;
     for (index, pair) in pairs.iter().enumerate() {
-        if pair.0 <= pair.1 {
+        if pair[0] <= pair[1] {
             total += index + 1;
         }
     }
-    println!("Total: {total}");
+    println!("Part 1: {total}");
     
+    let mut packets = pairs.iter().flatten().collect::<Vec<_>>();
+    let divider_one = PacketData::List(vec![PacketData::List(vec![PacketData::Integer(2)])]);
+    let divider_two = PacketData::List(vec![PacketData::List(vec![PacketData::Integer(6)])]);
+
+    packets.push(&divider_one);
+    packets.push(&divider_two);
+    packets.sort();
+
+    let index_one = packets.iter().enumerate().find_map(|(i, p)| (p == &&divider_one).then_some(i)).unwrap();
+    let index_two = packets.iter().enumerate().find_map(|(i, p)| (p == &&divider_two).then_some(i)).unwrap();
+    let decoder_key = (index_one + 1) * (index_two + 1);
+
+    println!("Part 2: {decoder_key}");
+
     Ok(())
 }
 
