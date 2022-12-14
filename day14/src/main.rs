@@ -35,17 +35,31 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let source = (500, 0);
     let max_y = input.iter().flatten().map(|p| p.1).max().unwrap();
+
     let mut total_sand = 0;
-    while add_sand(&mut map, source, max_y) {
+    let mut part1 = None;
+    loop {
+        let sand = add_sand(&map, source, max_y + 1);
+        map.insert(sand);
+
+        if sand.1 > max_y && part1.is_none() {
+            part1 = Some(total_sand);
+            println!("Part 1: {total_sand}");
+        }
+
         total_sand += 1;
+
+        if sand == source {
+            break;
+        }
     }
 
-    println!("Part 1: {total_sand}");
+    println!("Part 2: {total_sand}");
 
     Ok(())
 }
 
-fn add_sand(map: &mut BTreeSet<(i64, i64)>, start: (i64, i64), max_y: i64) -> bool {
+fn add_sand(map: &BTreeSet<(i64, i64)>, start: (i64, i64), max_y: i64) -> (i64, i64) {
     let mut sand = start;
     while sand.1 < max_y {
         if !map.contains(&(sand.0, sand.1 + 1)) {
@@ -55,10 +69,9 @@ fn add_sand(map: &mut BTreeSet<(i64, i64)>, start: (i64, i64), max_y: i64) -> bo
         } else if !map.contains(&(sand.0 + 1, sand.1 + 1)) {
             sand = (sand.0 + 1, sand.1 + 1);
         } else {
-            map.insert(sand);
-            return true;
+            break;
         }
     }
 
-    false
+    sand
 }
